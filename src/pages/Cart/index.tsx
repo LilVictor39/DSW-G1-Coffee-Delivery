@@ -79,18 +79,29 @@ export function Cart() {
       subTotal: 49.50,
     }
   ]);
+  const [paymentMethod, setPaymentMethod] = useState<'credit' | 'debit' | 'pix'>('pix')
 
-  const amountTags: string[] = [];
-  
-  coffeesInCart.map(coffee => coffee.tags.map((tag) => {
-    if (!amountTags.includes(tag)) {
-      amountTags.push(tag);
-    }
-  }));
-  
-  const totalItemsPrice = coffeesInCart.reduce((currencyValue, coffee) => {
-    return currencyValue + coffee.price * coffee.quantity
+  const paymentInfo = {
+    credit: { label: 'Cartão de crédito', tax: 3.85 },
+    debit: { label: 'Cartão de débito', tax: 1.85 },
+    pix: { label: 'Pix ou Dinheiro', tax: 0 },
+  }
+
+  const amountTags: string[] = []
+  coffeesInCart.map(coffee =>
+    coffee.tags.map(tag => {
+      if (!amountTags.includes(tag)) {
+        amountTags.push(tag)
+      }
+    })
+  );
+
+  const totalItemsPrice = coffeesInCart.reduce((sum, coffee) => {
+    return sum + coffee.price * coffee.quantity
   }, 0);
+
+  const juros = (totalItemsPrice * paymentInfo[paymentMethod].tax) / 100;
+  const totalGeral = totalItemsPrice + juros + (DELIVERY_PRICE * amountTags.length);
 
   function handleItemIncrement(id: string) {
     setCoffeesInCart((prevState) =>
@@ -110,27 +121,24 @@ export function Cart() {
     
   }
 
-  function handleItemDecrement(itemId: string) {
-    setCoffeesInCart((prevState) =>
-      prevState.map((coffee) => {
-        if (coffee.id === itemId && coffee.quantity > 1) {
-          const coffeeQuantity = coffee.quantity - 1;
-          const subTotal = coffee.price * coffeeQuantity;
+  function handleItemDecrement(id: string) {
+    setCoffeesInCart(prev =>
+      prev.map(coffee => {
+        if (coffee.id === id && coffee.quantity > 1) {
+          const qty = coffee.quantity - 1
           return {
             ...coffee,
-            quantity: coffeeQuantity,
-            subTotal,
+            quantity: qty,
+            subTotal: coffee.price * qty,
           }
         }
         return coffee
-      }),
+      })
     )
   }
 
-  function handleItemRemove(itemId: string) {
-    setCoffeesInCart((prevState) =>
-      prevState.filter((coffee) => coffee.id !== itemId),
-    )
+  function handleItemRemove(id: string) {
+    setCoffeesInCart(prev => prev.filter(coffee => coffee.id !== id))
   }
 
   return (
@@ -155,8 +163,8 @@ export function Cart() {
             <PaymentOptions>
               <div>
                 <Radio
-                  isSelected={false}
-                  onClick={() => {}}
+                  isSelected={paymentMethod === 'credit'}
+                  onClick={() => setPaymentMethod('credit')}
                   value="credit"
                 >
                   <CreditCard size={16} />
@@ -164,38 +172,37 @@ export function Cart() {
                 </Radio>
 
                 <Radio
-                  isSelected={false}
-                  onClick={() => {}}
+                  isSelected={paymentMethod === 'debit'}
+                  onClick={() => setPaymentMethod('debit')}
                   value="debit"
                 >
                   <Bank size={16} />
-                  <span>Cartão de débito</span>
+                    <span>Cartão de débito</span>
                 </Radio>
 
                 <Radio
-                  isSelected={true}
-                  onClick={() => {}}
-                  value="cash"
+                  isSelected={paymentMethod === 'pix'}
+                  onClick={() => setPaymentMethod('pix')}
+                  value="pix"
                 >
                   <Money size={16} />
                   <span>Pix ou Dinheiro</span>
                 </Radio>
-              </div>
-
-              {false ? (
+            </div>
+            {false ? (
                 <PaymentErrorMessage role="alert">
                   <span>Selecione uma forma de pagamento</span>
                 </PaymentErrorMessage>
               ) : null}
-            </PaymentOptions>
-          </PaymentContainer>
+          </PaymentOptions>
+        </PaymentContainer>
       </InfoContainer>
 
       <InfoContainer>
         <h2>Cafés selecionados</h2>
 
         <CartTotal>
-          {coffeesInCart.map((coffee) => (
+          {coffeesInCart.map(coffee => (
             <Fragment key={coffee.id}>
               <Coffee>
                 <div>
@@ -203,11 +210,11 @@ export function Cart() {
 
                   <div>
                     <span>{coffee.title}</span>
-                      <Tags>
-                        {coffee.tags.map((tag) => (
-                          <span key={tag}>{tag}</span>
-                        ))}
-                      </Tags>
+                    <Tags>
+                      {coffee.tags.map(tag => (
+                        <span key={tag}>{tag}</span>
+                      ))}
+                    </Tags>
 
                     <CoffeeInfo>
                       <QuantityInput
@@ -243,6 +250,11 @@ export function Cart() {
             </div>
 
             <div>
+              <span>Taxa de juros</span>
+              <span>{paymentInfo[paymentMethod].tax.toFixed(2)}%</span>
+            </div>
+
+            <div>
               <span>Entrega</span>
               <span>
                 {new Intl.NumberFormat('pt-br', {
@@ -253,13 +265,18 @@ export function Cart() {
             </div>
 
             <div>
-              <span>Total</span>
-              <span>
+              <strong>Total</strong>
+              <strong>
                 {new Intl.NumberFormat('pt-br', {
                   currency: 'BRL',
                   style: 'currency',
-                }).format(totalItemsPrice + (DELIVERY_PRICE * amountTags.length))}
-              </span>
+                }).format(totalGeral)}
+              </strong>
+            </div>
+
+            <div>
+              <span>Método de pagamento</span>
+              <span>{paymentInfo[paymentMethod].label}</span>
             </div>
           </CartTotalInfo>
 
@@ -268,7 +285,6 @@ export function Cart() {
           </CheckoutButton>
         </CartTotal>
       </InfoContainer>
-      {/* <Success /> */}
     </Container>
   )
 }

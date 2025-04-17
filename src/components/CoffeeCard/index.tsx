@@ -1,4 +1,4 @@
-import {Heart} from '@phosphor-icons/react'
+import { Heart } from '@phosphor-icons/react'
 import { useTheme } from 'styled-components'
 
 import { QuantityInput } from '../Form/QuantityInput'
@@ -29,40 +29,52 @@ type CoffeeCardProps = {
   handleFavoriteCoffee: (id: string) => void
 }
 
-export function CoffeeCard({ coffee, incrementQuantity, decrementQuantity }: CoffeeCardProps) {
-  const theme = useTheme();
-  /**
-   * Cor brancoa do coração quando o café não é favorito: theme.colors['base-card']
-   * Cor vermelha do coração quando o café é favorito: "red" 
-   * **/
+export function CoffeeCard({
+  coffee,
+  incrementQuantity,
+  decrementQuantity,
+  handleFavoriteCoffee,
+}: CoffeeCardProps) {
+  const theme = useTheme()
 
   return (
     <Container>
-      <CoffeeImg src={"/images/coffees/expresso-cremoso.png"} alt="Expresso Tradicional" />
+      <CoffeeImg src={coffee.image} alt={coffee.title} />
 
       <Tags>
-        {coffee.tags.map((tag) => <span key={tag}>{tag}</span>)}
+        {coffee.tags.map(tag => (
+          <span key={tag}>{tag}</span>
+        ))}
       </Tags>
 
       <Title>{coffee.title}</Title>
-
       <Description>{coffee.description}</Description>
 
       <Control>
         <Price>
           <span>R$</span>
-          <span>{coffee.price.toFixed(2)}</span> 
+          <span>{coffee.price.toFixed(2)}</span>
         </Price>
 
-        <Order $itemAdded={false}>
+        <Order $itemAdded={coffee.quantity > 0}>
           <QuantityInput
-            quantity={coffee.quantity }
+            quantity={coffee.quantity}
             incrementQuantity={() => incrementQuantity(coffee.id)}
             decrementQuantity={() => decrementQuantity(coffee.id)}
           />
 
-          <button onClick={() => {}}>
-            <Heart size={22}  color={theme.colors['base-card']} />
+          <button
+            onClick={(e) => {
+              e.preventDefault()
+              handleFavoriteCoffee(coffee.id)
+            }}
+            title={coffee.favorite ? 'Desfavoritar' : 'Favoritar'}
+          >
+            <Heart
+              size={22}
+              weight={coffee.favorite ? 'fill' : 'regular'}
+              color={coffee.favorite ? 'red' : theme.colors['base-card']}
+            />
           </button>
         </Order>
       </Control>

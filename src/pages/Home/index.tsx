@@ -22,19 +22,17 @@ interface Coffee {
 export function Home() {
   const theme = useTheme();
   const [coffees, setCoffees] = useState<Coffee[]>([]);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [categories] = useState<string[]>(['Tradicional', 'Gelado', 'Com leite']);
 
   useEffect(() => {
     async function fetchCoffees() {
       const response = await api('/coffees');
       setCoffees(response.data);
-
-      console.log({coffees: response.data});
     }
     fetchCoffees();
   }, []);
 
-
-  
   function incrementQuantity(id: string) {
     setCoffees((prevState) =>
       prevState.map((coffee) => {
@@ -79,6 +77,18 @@ export function Home() {
     
   }
 
+  function handleSelectTag(tag: string) {
+    setSelectedTag(prev => (prev === tag ? null : tag))
+  }
+
+  const filteredCoffees = selectedTag
+    ? coffees.filter(coffee =>
+        coffee.tags.some(tag =>
+          tag.toLowerCase() === selectedTag.toLowerCase()
+        )
+      )
+    : coffees
+
   return (
     <div>
       <Hero>
@@ -86,10 +96,8 @@ export function Home() {
           <div>
             <Heading>
               <h1>Encontre o café perfeito para qualquer hora do dia</h1>
-
               <span>
-                Com o Coffee Delivery você recebe seu café onde estiver, a
-                qualquer hora
+                Com o Coffee Delivery você recebe seu café onde estiver, a qualquer hora
               </span>
             </Heading>
 
@@ -103,7 +111,6 @@ export function Home() {
                 />
                 <span>Compra simples e segura</span>
               </div>
-
               <div>
                 <Package
                   size={32}
@@ -113,7 +120,6 @@ export function Home() {
                 />
                 <span>Embalagem mantém o café intacto</span>
               </div>
-
               <div>
                 <Timer
                   size={32}
@@ -123,7 +129,6 @@ export function Home() {
                 />
                 <span>Entrega rápida e rastreada</span>
               </div>
-
               <div>
                 <Coffee
                   size={32}
@@ -143,35 +148,23 @@ export function Home() {
       </Hero>
 
       <CoffeeList>
-
         <h2>Nossos cafés</h2>
+
         <Navbar>
-          <Radio
-            onClick={() => {}}
-            isSelected={false}
-            value="tradicional"
-          >
-            <span>Tradicional</span>
-          </Radio>
-          <Radio
-            onClick={() => {}}
-            isSelected={false}
-            value="gelado"
-          >
-            <span>Gelado</span>
-          </Radio>
-          <Radio
-            onClick={() => {}}
-            isSelected={false}
-            value="com leite"
-          >
-            <span>Com leite</span>
-          </Radio>
+          {categories.map(tag => (
+            <Radio
+              key={tag}
+              onClick={() => handleSelectTag(tag)}
+              isSelected={selectedTag === tag}
+              value={tag}
+            >
+              <span>{tag}</span>
+            </Radio>
+          ))}
         </Navbar>
 
-
         <div>
-          {coffees.map((coffee) => (
+          {filteredCoffees.map(coffee => (
             <CoffeeCard
               key={coffee.id}
               coffee={coffee}
